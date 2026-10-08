@@ -1,0 +1,20 @@
+{
+  "name": "ruangdana",
+  "private": true,
+  "version": "0.1.0",
+  "description": "RuangDana — Beri Ruang untuk Setiap Tujuan. Aplikasi pencatatan dan perencanaan keuangan pribadi.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c magenta,blue \"npm run dev -w @ruangdana/api\" \"npm run dev -w @ruangdana/web\"",
+    "dev:web": "npm run dev -w @ruangdana/web",
+    "dev:api": "npm run dev -w @ruangdana/api",
+    "build": "npm run build -w @ruangdana/api && npm run build -w @ruangdana/web",
+    "typecheck": "npm run typecheck -w @ruangdana/shared && npm run typecheck -w @ruangdana/api && npm run typecheck -w @ruangdana/web"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}
