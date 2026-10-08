@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Logo } from "@/components/ui/Logo";
+import { useAuth } from "@/features/auth/AuthContext";
 import { navItems } from "./nav";
 
 function SidebarLink({ to, label, icon: Icon, onNavigate }: (typeof navItems)[number] & { onNavigate?: () => void }) {
@@ -26,6 +27,7 @@ function SidebarLink({ to, label, icon: Icon, onNavigate }: (typeof navItems)[nu
 
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
   const { pathname } = useLocation();
 
   useEffect(() => setMenuOpen(false), [pathname]);
@@ -50,7 +52,13 @@ export function AppShell() {
         <nav aria-label="Navigasi utama" className="mt-8 flex flex-1 flex-col gap-1 overflow-y-auto">
           {navItems.map((item) => <SidebarLink key={item.to} {...item} />)}
         </nav>
-        <p className="px-2 text-xs text-ink-soft">Beri Ruang untuk Setiap Tujuan.</p>
+        <div className="border-t border-line px-2 pt-4">
+          <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
+          <p className="truncate text-xs text-ink-soft">{user?.email}</p>
+          <button type="button" onClick={() => logout()} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink">
+            <LogOut className="size-4" aria-hidden />Keluar
+          </button>
+        </div>
       </aside>
 
       {/* Header mobile */}
@@ -86,6 +94,13 @@ export function AppShell() {
             <nav aria-label="Navigasi lengkap" className="mt-3 flex flex-col gap-1 overflow-y-auto">
               {navItems.map((item) => <SidebarLink key={item.to} {...item} onNavigate={() => setMenuOpen(false)} />)}
             </nav>
+            <div className="mt-auto border-t border-line pt-4">
+              <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
+              <p className="truncate text-xs text-ink-soft">{user?.email}</p>
+              <button type="button" onClick={() => logout()} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink">
+                <LogOut className="size-4" aria-hidden />Keluar
+              </button>
+            </div>
           </div>
         </div>
       )}

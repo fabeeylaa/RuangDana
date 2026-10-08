@@ -1,0 +1,124 @@
+// RuangDana — skema Phase 2 (pengguna, sesi, akun keuangan).
+// Semua nilai uang disimpan sebagai BigInt Rupiah (bilangan bulat, tanpa desimal).
+// Phase 3 menambah kategori dan transaksi. Tujuan tabungan ditambahkan pada Phase 4.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountType {
+  CASH
+  BANK
+  EWALLET
+  SAVINGS
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum CategoryKind {
+  INCOME
+  EXPENSE
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  name         String
+  passwordHash String
+  onboardedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions     Session[]
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+}
+
+/// Sesi login. Token mentah hanya ada di cookie klien; di database hanya hash SHA-256-nya.
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Account {
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String      @db.Uuid
+  name           String
+  type           AccountType
+  /// Saldo awal saat akun dicatat (Rupiah). Saldo berjalan = saldo awal + transaksi (mulai Phase 3).
+  openingBalance BigInt      @default(0)
+  archivedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outgoing      Transaction[] @relation("TransactionAccount")
+  incoming      Transaction[] @relation("TransactionToAccount")
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Category {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @db.Uuid
+  name      String
+  kind      CategoryKind
+  createdAt DateTime     @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, kind, name])
+  @@index([userId])
+}
+
+/// Catatan keuangan. `amount` selalu positif; arah ditentukan oleh `type`:
+///   INCOME   : menambah saldo `accountId`
+///   EXPENSE  : mengurangi saldo `accountId`
+///   TRANSFER : memindahkan dari `accountId` ke `toAccountId` (total aset tetap)
+/// Penghapusan bersifat soft delete (`deletedAt`) agar riwayat tetap terjaga.
+/// Aturan bentuk data (amount > 0, transfer wajib punya tujuan dan tanpa kategori, dll.)
+/// ditegakkan juga oleh CHECK constraint di migrasi SQL (tidak dimodelkan Prisma).
+model Transaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @db.Uuid
+  type        TransactionType
+  amount      BigInt
+  date        DateTime        @db.Date
+  description String
+  accountId   String          @db.Uuid
+  toAccountId String?         @db.Uuid
+  categoryId  String?         @db.Uuid
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account   @relation("TransactionAccount", fields: [accountId], references: [id], onDelete: Restrict)
+  toAccount Account?  @relation("TransactionToAccount", fields: [toAccountId], references: [id], onDelete: Restrict)
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId, date])
+  @@index([accountId])
+  @@index([toAccountId])
+  @@index([categoryId])
+}

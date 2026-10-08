@@ -1,0 +1,15 @@
+# PostgreSQL lokal untuk pengembangan. Kredensial ini HANYA untuk lokal.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ruangdana
+      POSTGRES_PASSWORD: ruangdana_dev
+      POSTGRES_DB: ruangdana
+    ports:
+      - "5432:5432"
+    volumes:
+      - ruangdana-db:/var/lib/postgresql/data
+volumes:
+  ruangdana-db:

@@ -28,3 +28,9 @@ export function formatRupiahCompact(value: Rupiah): string {
   if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)} rb`;
   return `${sign}${abs}`;
 }
+
+/** Batas atas nilai uang per entri agar penjumlahan tetap aman sebagai integer JS. */
+export const MAX_RUPIAH = 1_000_000_000_000; // 1 triliun
+
+/** Batas atas saldo satu akun (jauh di bawah Number.MAX_SAFE_INTEGER ≈ 9×10^15). */
+export const MAX_BALANCE = 1_000_000_000_000_000; // 1 kuadriliun
