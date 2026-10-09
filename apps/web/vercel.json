@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://ALAMAT-RAILWAY-MU/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
